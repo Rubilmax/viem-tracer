@@ -3,8 +3,18 @@ import type { TraceCallRpcSchema } from "./actions/traceCall.js";
 import { formatFullTrace } from "./format.js";
 
 export type TracerConfig = {
+  /**
+   * Whether to trace all transactions. Default to `false`.
+   */
   all: boolean;
+  /**
+   * Whether to trace the next submitted transaction. Default to `false`.
+   */
   next: boolean;
+  /**
+   * Whether to trace all failed transactions. Default to `true`.
+   */
+  failed: boolean;
 };
 
 export type TracedTransport<transport extends Transport = Transport> = transport extends Transport<
@@ -24,7 +34,7 @@ export type TracedTransport<transport extends Transport = Transport> = transport
  */
 export function traced<transport extends Transport>(
   transport: transport,
-  { all = true, next = false }: Partial<TracerConfig> = {},
+  { all = false, next = false, failed = true }: Partial<TracerConfig> = {},
 ): TracedTransport<transport> {
   // @ts-ignore: complex overload
   return (...config) => {
@@ -32,7 +42,7 @@ export function traced<transport extends Transport>(
 
     instance.value = {
       ...instance.value,
-      tracer: { all, next },
+      tracer: { all, next, failed },
     };
 
     return {
@@ -61,7 +71,7 @@ export function traced<transport extends Transport>(
         switch (method) {
           case "eth_estimateGas":
           case "eth_sendTransaction": {
-            if (instance.value?.tracer.next) {
+            if (instance.value?.tracer.all || instance.value?.tracer.next) {
               instance.value.tracer.next = false;
 
               try {
@@ -79,7 +89,7 @@ export function traced<transport extends Transport>(
           switch (method) {
             case "eth_estimateGas":
             case "eth_sendTransaction": {
-              if (instance.value?.tracer.all) {
+              if (instance.value?.tracer.failed) {
                 throw new RawContractError({ message: `\n${await traceCall()}` });
               }
 

@@ -73,7 +73,7 @@ describe("traceCall", () => {
   });
 
   test("should not trace failing txs when disabled", async ({ expect, client }) => {
-    client.transport.tracer.all = false;
+    client.transport.tracer.failed = false;
 
     await expect(
       client.writeContract({
@@ -96,7 +96,7 @@ describe("traceCall", () => {
       Version: viem@2.21.32]
     `);
 
-    client.transport.tracer.all = true;
+    client.transport.tracer.failed = true;
 
     await expect(
       client.writeContract({
@@ -127,7 +127,7 @@ describe("traceCall", () => {
   test("should trace next txs even when disabled", async ({ expect, client }) => {
     const consoleSpy = vi.spyOn(console, "log");
 
-    client.transport.tracer.all = false;
+    client.transport.tracer.failed = false;
     client.transport.tracer.next = true;
 
     await client

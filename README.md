@@ -32,7 +32,10 @@ import { traceActions, traced } from 'viem-tracer';
 const client = createTestClient({
   mode: 'anvil',
   chain: foundry,
-  transport: traced(http()), // Automatically trace failed transactions (or programmatically)
+  transport: traced( // Automatically trace failed transactions (or programmatically)
+    http(),
+    { all: false, next: false, failed: true } // Optional, default tracer config
+  ),
 }).extend(traceActions); // Extend client with the `client.traceCall` action
 
 // Returns the call trace as formatted by the requested tracer.
@@ -48,6 +51,9 @@ await client.traceCall({
 // 0 ↳ FROM 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 // 0 ↳ CALL (0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).transfer(0xf39F...0xf3, 100000000) -> ERC20: transfer amount exceeds balance
 //   1 ↳ DELEGATECALL (0x43506849D7C04F9138D1A2050bbF3A0c054402dd).transfer(0xf39F...0xf3, 100000000) -> ERC20: transfer amount exceeds balance
+
+client.transport.tracer.all = true; // If you want to trace all submitted transactions, failing or not.
+client.transport.tracer.next = true; // If you want to trace the next submitted transaction.
 
 ```
 

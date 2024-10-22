@@ -2,9 +2,13 @@ import { existsSync, readFileSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { bold, cyan, grey, red, white, yellow } from "colors/safe.js";
+import colors from "colors/safe.js";
 import { type Address, type Hex, decodeFunctionData, isAddress, parseAbi, slice } from "viem";
 import type { RpcCallTrace } from "./actions/traceCall.js";
+
+// The requested module 'colors/safe.js' is a CommonJS module, which may not support all module.exports as named exports.
+// CommonJS modules can always be imported via the default export, for example using:
+const { bold, cyan, grey, red, white, yellow } = colors;
 
 export const signaturesPath = join(homedir(), ".foundry", "cache", "signatures");
 

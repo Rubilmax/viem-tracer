@@ -54,6 +54,7 @@ await client.traceCall({
 
 client.transport.tracer.all = true; // If you want to trace all submitted transactions, failing or not.
 client.transport.tracer.next = true; // If you want to trace the next submitted transaction.
+client.transport.tracer.failed = false; // If you don't want to append traces to failed transactions.
 
 ```
 

@@ -1,8 +1,8 @@
 import { RawContractError, type Transport } from "viem";
 import type { TraceCallRpcSchema } from "./actions/traceCall.js";
-import { formatFullTrace } from "./format.js";
+import { type TraceFormatConfig, formatFullTrace } from "./format.js";
 
-export type TracerConfig = {
+export type TracerConfig = TraceFormatConfig & {
   /**
    * Whether to trace all transactions. Default to `false`.
    */
@@ -34,7 +34,7 @@ export type TracedTransport<transport extends Transport = Transport> = transport
  */
 export function traced<transport extends Transport>(
   transport: transport,
-  { all = false, next = false, failed = true }: Partial<TracerConfig> = {},
+  { all = false, next = false, failed = true, gas = false }: Partial<TracerConfig> = {},
 ): TracedTransport<transport> {
   // @ts-ignore: complex overload
   return (...config) => {
@@ -42,7 +42,7 @@ export function traced<transport extends Transport>(
 
     instance.value = {
       ...instance.value,
-      tracer: { all, next, failed },
+      tracer: { all, next, failed, gas },
     };
 
     return {
@@ -59,13 +59,21 @@ export function traced<transport extends Transport>(
                 params[0],
                 // @ts-ignore: params[1] is either undefined or the block identifier
                 params[1] || "latest",
-                { tracer: "callTracer" },
+                {
+                  // @ts-ignore: params[2] may contain state and block overrides
+                  ...params[2],
+                  tracer: "callTracer",
+                  tracerConfig: {
+                    onlyTopCall: false,
+                    withLog: true,
+                  },
+                },
               ],
             },
             { retryCount: 0 },
           );
 
-          return await formatFullTrace(trace);
+          return await formatFullTrace(trace, instance.value!.tracer);
         };
 
         switch (method) {

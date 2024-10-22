@@ -124,18 +124,21 @@ describe("traceCall", () => {
     `);
   });
 
-  test("should trace next txs even when disabled", async ({ expect, client }) => {
+  test("should trace next tx with gas even when failed disabled", async ({ expect, client }) => {
+    const amount = parseUnits("100", 6);
     const consoleSpy = vi.spyOn(console, "log");
 
     client.transport.tracer.failed = false;
     client.transport.tracer.next = true;
+    client.transport.tracer.gas = true;
 
+    await client.deal({ erc20: usdc, amount });
     await client
       .writeContract({
         address: usdc,
         abi: erc20Abi,
         functionName: "transfer",
-        args: [client.account.address, parseUnits("100", 6)],
+        args: [client.account.address, amount / 2n],
       })
       .catch(() => {});
 
@@ -143,8 +146,9 @@ describe("traceCall", () => {
       [
         [
           "0 ↳ FROM 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
-      0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer amount exceeds balance
-        1 ↳ DELEGATECALL (0x43506849d7c04f9138d1a2050bbf3a0c054402dd).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer amount exceeds balance
+      0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer{ 37,560 / 29,978,392 }(0xf39Fd6…0xf3, 50000000) -> 0x0000000000000000000000000000000000000000000000000000000000000001
+        1 ↳ DELEGATECALL (0x43506849d7c04f9138d1a2050bbf3a0c054402dd).transfer{ 11,463 / 29,502,848 }(0xf39Fd6…0xf3, 50000000) -> 0x0000000000000000000000000000000000000000000000000000000000000001
+          2 ↳ LOG Transfer(0xf39Fd6…0xf3, 0xf39Fd6…0xf3, 50000000)
       ",
         ],
       ]

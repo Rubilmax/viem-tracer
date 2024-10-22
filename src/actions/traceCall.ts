@@ -31,13 +31,20 @@ export type TraceCallRpcSchema = {
         BlockTag | Hex,
         {
           tracer: "callTracer" | "prestateTracer";
-          tracerConfig?: { onlyTopCall?: boolean };
+          tracerConfig?: { onlyTopCall?: boolean; withLog?: boolean };
         },
       ];
   ReturnType: RpcCallTrace;
 };
 
 export type RpcCallType = "CALL" | "STATICCALL" | "DELEGATECALL" | "CREATE" | "CREATE2" | "SELFDESTRUCT" | "CALLCODE";
+
+export type RpcLogTrace = {
+  address: Address;
+  data: Hex;
+  position: Hex;
+  topics: [Hex, ...Hex[]];
+};
 
 export type RpcCallTrace = {
   from: Address;
@@ -49,6 +56,7 @@ export type RpcCallTrace = {
   error?: string;
   revertReason?: string;
   calls?: RpcCallTrace[];
+  logs?: RpcLogTrace[];
   value: Hex;
   type: RpcCallType;
 };

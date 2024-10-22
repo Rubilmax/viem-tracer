@@ -1918,6 +1918,11 @@ unicorn-magic@^0.1.0:
   resolved "https://registry.yarnpkg.com/unicorn-magic/-/unicorn-magic-0.1.0.tgz#1bb9a51c823aaf9d73a8bfcd3d1a23dde94b0ce4"
   integrity sha512-lRfVq8fE8gz6QMBuDM6a+LO3IAzTi05H6gCVaUpir2E1Rwpo4ZUog45KpNXKC/Mn3Yb9UDuHumeFTo9iV/D9FQ==
 
+viem-deal@^2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/viem-deal/-/viem-deal-2.0.2.tgz#7f682929050dd614147fb5e9ea9a22c478676139"
+  integrity sha512-cm6GWmVHjvvejm2OOiqAo/hsTYbkErjx0+Ag3T5rPg64tG9ETr+1aTDZNUvK7rDYdzSwLT3+M5w0OCEp2aUIew==
+
 viem@^2.21.32:
   version "2.21.32"
   resolved "https://registry.yarnpkg.com/viem/-/viem-2.21.32.tgz#b7f43b2004967036f83500260290cee45189f62a"

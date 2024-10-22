@@ -1,6 +1,7 @@
 import { disable } from "colors";
 import type { Client, HDAccount, HttpTransport, PublicActions, TestActions, TestRpcSchema, WalletActions } from "viem";
 import { http, createTestClient, publicActions, walletActions } from "viem";
+import { type DealActions, dealActions } from "viem-deal";
 import { mainnet } from "viem/chains";
 import { test as vitest } from "vitest";
 import { type TraceActions, type TracedTransport, traceActions, traced } from "../src/index.js";
@@ -36,6 +37,7 @@ export const test = vitest.extend<{
     HDAccount,
     TestRpcSchema<"anvil">,
     TestActions &
+      DealActions<HDAccount> &
       TraceActions<typeof mainnet> &
       PublicActions<TracedTransport<HttpTransport>, typeof mainnet, HDAccount> &
       WalletActions<typeof mainnet, HDAccount>
@@ -46,6 +48,7 @@ export const test = vitest.extend<{
     const { rpcUrl, stop } = await spawnAnvil({
       forkUrl: process.env.MAINNET_RPC_URL || mainnet.rpcUrls.default.http[0],
       forkBlockNumber: 20_884_340,
+      stepsTracing: true,
     });
 
     await use(
@@ -55,6 +58,7 @@ export const test = vitest.extend<{
         account: testAccount(),
         transport: traced(http(rpcUrl)),
       })
+        .extend(dealActions)
         .extend(publicActions)
         .extend(walletActions)
         .extend(traceActions),

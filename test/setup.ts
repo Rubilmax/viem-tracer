@@ -14,7 +14,7 @@ BigInt.prototype.toJSON = function () {
   return this.toString();
 };
 
-disable(); // To avoid snapshot mismatch due to OS colors.
+disable();
 
 declare global {
   namespace NodeJS {

@@ -57,8 +57,8 @@ describe("traceCall", () => {
       [ContractFunctionExecutionError: The contract function "transfer" reverted with the following reason:
 
       0 ↳ FROM 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
-      0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer(0xf39F...0xf3, 100000000) -> ERC20: transfer amount exceeds balance
-        1 ↳ DELEGATECALL (0x43506849d7c04f9138d1a2050bbf3a0c054402dd).transfer(0xf39F...0xf3, 100000000) -> ERC20: transfer amount exceeds balance
+      0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer amount exceeds balance
+        1 ↳ DELEGATECALL (0x43506849d7c04f9138d1a2050bbf3a0c054402dd).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer amount exceeds balance
 
 
       Contract Call:
@@ -109,8 +109,8 @@ describe("traceCall", () => {
       [ContractFunctionExecutionError: The contract function "transfer" reverted with the following reason:
 
       0 ↳ FROM 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
-      0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer(0xf39F...0xf3, 100000000) -> ERC20: transfer amount exceeds balance
-        1 ↳ DELEGATECALL (0x43506849d7c04f9138d1a2050bbf3a0c054402dd).transfer(0xf39F...0xf3, 100000000) -> ERC20: transfer amount exceeds balance
+      0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer amount exceeds balance
+        1 ↳ DELEGATECALL (0x43506849d7c04f9138d1a2050bbf3a0c054402dd).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer amount exceeds balance
 
 
       Contract Call:
@@ -143,8 +143,8 @@ describe("traceCall", () => {
       [
         [
           "0 ↳ FROM 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
-      0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer(0xf39F...0xf3, 100000000) -> ERC20: transfer amount exceeds balance
-        1 ↳ DELEGATECALL (0x43506849d7c04f9138d1a2050bbf3a0c054402dd).transfer(0xf39F...0xf3, 100000000) -> ERC20: transfer amount exceeds balance
+      0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer amount exceeds balance
+        1 ↳ DELEGATECALL (0x43506849d7c04f9138d1a2050bbf3a0c054402dd).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer amount exceeds balance
       ",
         ],
       ]

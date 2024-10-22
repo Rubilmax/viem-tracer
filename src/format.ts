@@ -1,26 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
+import { writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import "colors";
-import { writeFile } from "node:fs/promises";
-import { grey, red, yellow } from "colors";
-import {
-  type Address,
-  type BlockTag,
-  type Chain,
-  type Client,
-  type ExactPartial,
-  type Hex,
-  type RpcTransactionRequest,
-  type Transport,
-  type UnionOmit,
-  decodeFunctionData,
-  isAddress,
-  parseAbi,
-  slice,
-} from "viem";
-import { getAction } from "viem/utils";
-import { type RpcCallTrace, type TraceCallParameters, traceCall } from "./actions/traceCall.js";
+import { bold, cyan, grey, red, white, yellow } from "colors/safe.js";
+import { type Address, type Hex, decodeFunctionData, isAddress, parseAbi, slice } from "viem";
+import type { RpcCallTrace } from "./actions/traceCall.js";
 
 export const signaturesPath = join(homedir(), ".foundry", "cache", "signatures");
 
@@ -51,9 +35,9 @@ export const getCallTraceUnknownSelectors = (trace: RpcCallTrace): string => {
 };
 
 export const getIndentLevel = (level: number, index = false) =>
-  `${"  ".repeat(level - 1)}${index ? `${level - 1} ↳ `.cyan : "    "}`;
+  `${"  ".repeat(level - 1)}${index ? cyan(`${level - 1} ↳ `) : "    "}`;
 
-export const formatAddress = (address: Address) => `${address.slice(0, 6)}...${address.slice(0, 4)}`;
+export const formatAddress = (address: Address) => `${address.slice(0, 8)}…${address.slice(0, 4)}`;
 
 export const formatArg = (arg: unknown, level: number): string => {
   if (Array.isArray(arg)) {
@@ -95,7 +79,7 @@ export const formatCallSignature = (trace: RpcCallTrace, level: number) => {
 
   const formattedArgs = args?.map((arg) => formatArg(arg, level)).join(", ");
 
-  return `${(trace.error ? red : yellow)(functionName).bold}(${(formattedArgs ?? "").grey})`;
+  return `${bold((trace.error ? red : yellow)(functionName))}(${grey(formattedArgs ?? "")})`;
 };
 
 export const formatCallTrace = (trace: RpcCallTrace, level = 1): string => {
@@ -103,7 +87,7 @@ export const formatCallTrace = (trace: RpcCallTrace, level = 1): string => {
 
   const returnValue = trace.revertReason ?? trace.output;
 
-  return `${level === 1 ? `${getIndentLevel(level, true)}FROM ${trace.from.grey}\n`.cyan : ""}${getIndentLevel(level, true)}${trace.type.yellow} ${trace.from === trace.to ? ("self").grey : `(${trace.to.white})`}.${formatCallSignature(trace, level)}${returnValue ? (trace.error ? red : grey)(` -> ${returnValue}`) : ""}
+  return `${level === 1 ? `${getIndentLevel(level, true)}${cyan("FROM")} ${grey(trace.from)}\n` : ""}${getIndentLevel(level, true)}${yellow(trace.type)} ${trace.from === trace.to ? grey("self") : `(${white(trace.to)})`}.${formatCallSignature(trace, level)}${returnValue ? (trace.error ? red : grey)(` -> ${returnValue}`) : ""}
 ${rest}`;
 };
 

@@ -9,7 +9,6 @@ import {
   type ExactPartial,
   type FormattedTransactionRequest,
   type Hex,
-  type PrepareTransactionRequestParameters,
   type RpcTransactionRequest,
   type TransactionRequest,
   type Transport,
@@ -21,7 +20,7 @@ import {
 import { parseAccount } from "viem/accounts";
 import { prepareTransactionRequest } from "viem/actions";
 import { recoverAuthorizationAddress } from "viem/experimental";
-import { extract, getAction, getTransactionError } from "viem/utils";
+import { extract, getTransactionError } from "viem/utils";
 
 export type TraceCallRpcSchema = {
   Method: "debug_traceCall";

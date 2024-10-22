@@ -1,0 +1,30 @@
+name: Jest Test Suite
+
+on:
+  pull_request:
+    paths:
+      - src/**
+      - test/**
+      - package.json
+      - yarn.lock
+  workflow_call:
+
+jobs:
+  vitest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - uses: foundry-rs/foundry-toolchain@v1.2.0
+
+      - run: yarn --frozen-lockfile
+
+      - run: yarn test --coverage
+        env:
+          MAINNET_RPC_URL: https://eth-mainnet.g.alchemy.com/v2/${{ secrets.ALCHEMY_KEY }}

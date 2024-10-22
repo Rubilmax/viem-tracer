@@ -32,8 +32,8 @@ import { traceActions, traced } from 'viem-tracer';
 const client = createTestClient({
   mode: 'anvil',
   chain: foundry,
-  transport: traced(http()),
-}).extend(traceActions);
+  transport: traced(http()), // Automatically trace failed transactions (or programmatically)
+}).extend(traceActions); // Extend client with the `client.traceCall` action
 
 // Returns the call trace as formatted by the requested tracer.
 await client.traceCall({

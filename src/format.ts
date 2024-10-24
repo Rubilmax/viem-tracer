@@ -1,5 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
-import { writeFile } from "node:fs/promises";
+import { readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import colors from "colors/safe.js";
@@ -19,24 +18,30 @@ import type { RpcCallTrace, RpcLogTrace } from "./actions/traceCall.js";
 // CommonJS modules can always be imported via the default export, for example using:
 const { bold, cyan, grey, red, white, yellow, green, dim, magenta } = colors;
 
-export type TraceFormatConfig = {
+export interface TraceFormatConfig {
   gas: boolean;
-};
+}
 
-export const signaturesPath = join(homedir(), ".foundry", "cache", "signatures");
-
-export const signatures: {
+export interface SignaturesCache {
   events: Record<Hex, string>;
   functions: Record<Hex, string>;
-} = existsSync(signaturesPath)
-  ? JSON.parse(readFileSync(signaturesPath, { encoding: "utf8" }))
-  : { events: {}, functions: {} };
+}
+
+export const getSignaturesCachePath = () => join(homedir(), ".foundry", "cache", "signatures");
+
+export const loadSignaturesCache = (): SignaturesCache => {
+  try {
+    return JSON.parse(readFileSync(getSignaturesCachePath(), { encoding: "utf8" }));
+  } catch {}
+
+  return { events: {}, functions: {} };
+};
 
 export const getSelector = (input: Hex) => slice(input, 0, 4);
 
-export const getCallTraceUnknownFunctionSelectors = (trace: RpcCallTrace): string => {
+export const getCallTraceUnknownFunctionSelectors = (trace: RpcCallTrace, signatures: SignaturesCache): string => {
   const rest = (trace.calls ?? [])
-    .flatMap((subtrace) => getCallTraceUnknownFunctionSelectors(subtrace))
+    .flatMap((subtrace) => getCallTraceUnknownFunctionSelectors(subtrace, signatures))
     .filter(Boolean);
 
   if (trace.input) {
@@ -48,8 +53,10 @@ export const getCallTraceUnknownFunctionSelectors = (trace: RpcCallTrace): strin
   return rest.join(",");
 };
 
-export const getCallTraceUnknownEventSelectors = (trace: RpcCallTrace): string => {
-  const rest = (trace.calls ?? []).flatMap((subtrace) => getCallTraceUnknownEventSelectors(subtrace)).filter(Boolean);
+export const getCallTraceUnknownEventSelectors = (trace: RpcCallTrace, signatures: SignaturesCache): string => {
+  const rest = (trace.calls ?? [])
+    .flatMap((subtrace) => getCallTraceUnknownEventSelectors(subtrace, signatures))
+    .filter(Boolean);
 
   if (trace.logs) {
     for (const log of trace.logs) {
@@ -91,7 +98,12 @@ export const formatArg = (arg: unknown, level: number): string => {
   }
 };
 
-export const formatCallSignature = (trace: RpcCallTrace, config: Partial<TraceFormatConfig>, level: number) => {
+export const formatCallSignature = (
+  trace: RpcCallTrace,
+  config: Partial<TraceFormatConfig>,
+  level: number,
+  signatures: SignaturesCache,
+) => {
   const selector = getSelector(trace.input);
 
   const signature = signatures.functions[selector];
@@ -110,13 +122,11 @@ export const formatCallSignature = (trace: RpcCallTrace, config: Partial<TraceFo
   return `${bold((trace.error ? red : green)(functionName))}${config.gas ? dim(magenta(`{ ${Number(trace.gasUsed).toLocaleString()} / ${Number(trace.gas).toLocaleString()} }`)) : ""}(${formattedArgs ?? ""})`;
 };
 
-export const formatCallLog = (log: RpcLogTrace, level: number) => {
+export const formatCallLog = (log: RpcLogTrace, level: number, signatures: SignaturesCache) => {
   const selector = log.topics[0]!;
 
   const signature = signatures.events[selector];
   if (!signature) return concatHex(log.topics);
-
-  const nbIndexed = log.topics.length - 1;
 
   const { eventName, args } = decodeEventLog({
     abi: parseAbi(
@@ -133,24 +143,36 @@ export const formatCallLog = (log: RpcLogTrace, level: number) => {
   return `${getIndentLevel(level + 1, true)}${yellow("LOG")} ${eventName}(${formattedArgs ?? ""})`;
 };
 
-export const formatCallTrace = (trace: RpcCallTrace, config: Partial<TraceFormatConfig> = {}, level = 1): string => {
-  const rest = (trace.calls ?? []).map((subtrace) => formatCallTrace(subtrace, config, level + 1)).join("\n");
+export const formatCallTrace = (
+  trace: RpcCallTrace,
+  config: Partial<TraceFormatConfig> = {},
+  signatures: SignaturesCache = loadSignaturesCache(),
+  level = 1,
+): string => {
+  const rest = (trace.calls ?? [])
+    .map((subtrace) => formatCallTrace(subtrace, config, signatures, level + 1))
+    .join("\n");
 
   const returnValue = trace.revertReason ?? trace.output;
 
-  return `${level === 1 ? `${getIndentLevel(level, true)}${cyan("FROM")} ${grey(trace.from)}\n` : ""}${getIndentLevel(level, true)}${yellow(trace.type)} ${trace.from === trace.to ? grey("self") : `(${white(trace.to)})`}.${formatCallSignature(trace, config, level)}${returnValue ? (trace.error ? red : grey)(` -> ${returnValue}`) : ""}${trace.logs ? `\n${trace.logs.map((log) => formatCallLog(log, level))}` : ""}
+  return `${level === 1 ? `${getIndentLevel(level, true)}${cyan("FROM")} ${grey(trace.from)}\n` : ""}${getIndentLevel(level, true)}${yellow(trace.type)} ${trace.from === trace.to ? grey("self") : `(${white(trace.to)})`}.${formatCallSignature(trace, config, level, signatures)}${returnValue ? (trace.error ? red : grey)(` -> ${returnValue}`) : ""}${trace.logs ? `\n${trace.logs.map((log) => formatCallLog(log, level, signatures))}` : ""}
 ${rest}`;
 };
 
-export async function formatFullTrace(trace: RpcCallTrace, config?: Partial<TraceFormatConfig>) {
-  const unknownFunctionSelectors = getCallTraceUnknownFunctionSelectors(trace);
-  const unknownEventSelectors = getCallTraceUnknownEventSelectors(trace);
+export async function formatFullTrace(
+  trace: RpcCallTrace,
+  config?: Partial<TraceFormatConfig>,
+  signatures: SignaturesCache = loadSignaturesCache(),
+) {
+  const unknownFunctionSelectors = getCallTraceUnknownFunctionSelectors(trace, signatures);
+  const unknownEventSelectors = getCallTraceUnknownEventSelectors(trace, signatures);
 
   if (unknownFunctionSelectors || unknownEventSelectors) {
-    const lookupRes = await fetch(
-      `https://api.openchain.xyz/signature-database/v1/lookup?filter=false${unknownFunctionSelectors ? `&function=${unknownFunctionSelectors}` : ""}${unknownEventSelectors ? `&event=${unknownEventSelectors}` : ""}`,
-    );
+    const searchParams = new URLSearchParams({ filter: "false" });
+    if (unknownFunctionSelectors) searchParams.append("function", unknownFunctionSelectors);
+    if (unknownEventSelectors) searchParams.append("event", unknownEventSelectors);
 
+    const lookupRes = await fetch(`https://api.openchain.xyz/signature-database/v1/lookup?${searchParams.toString()}`);
     const lookup = await lookupRes.json();
 
     if (lookup.ok) {
@@ -167,7 +189,7 @@ export async function formatFullTrace(trace: RpcCallTrace, config?: Partial<Trac
         signatures.events[sig as Hex] = match;
       });
 
-      writeFile(signaturesPath, JSON.stringify(signatures)); // Non blocking.
+      writeFileSync(getSignaturesCachePath(), JSON.stringify(signatures));
     } else {
       console.warn(
         `Failed to fetch signatures for unknown selectors: ${unknownFunctionSelectors},${unknownEventSelectors}`,
@@ -177,5 +199,5 @@ export async function formatFullTrace(trace: RpcCallTrace, config?: Partial<Trac
     }
   }
 
-  return white(formatCallTrace(trace, config));
+  return white(formatCallTrace(trace, config, signatures));
 }

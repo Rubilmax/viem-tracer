@@ -17,7 +17,7 @@ import type { RpcCallTrace, RpcLogTrace } from "./actions/traceCall.js";
 
 // The requested module 'colors/safe.js' is a CommonJS module, which may not support all module.exports as named exports.
 // CommonJS modules can always be imported via the default export, for example using:
-const { bold, cyan, grey, red, white, yellow, green, dim, black, magenta } = colors;
+const { bold, cyan, grey, red, white, yellow, green, dim, magenta } = colors;
 
 export type TraceFormatConfig = {
   gas: boolean;
@@ -177,5 +177,5 @@ export async function formatFullTrace(trace: RpcCallTrace, config?: Partial<Trac
     }
   }
 
-  return formatCallTrace(trace, config);
+  return white(formatCallTrace(trace, config));
 }

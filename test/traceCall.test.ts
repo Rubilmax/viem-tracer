@@ -156,4 +156,54 @@ describe("traceCall", () => {
 
     consoleSpy.mockRestore();
   });
+
+  test("should not trace next tx when next disabled", async ({ expect, client }) => {
+    client.transport.tracer.next = false;
+
+    await expect(
+      client.writeContract({
+        address: usdc,
+        abi: erc20Abi,
+        functionName: "transfer",
+        args: [client.account.address, parseUnits("100", 6)],
+      }),
+    ).rejects.toMatchInlineSnapshot(`
+      [ContractFunctionExecutionError: The contract function "transfer" reverted with the following reason:
+      ERC20: transfer amount exceeds balance
+
+      Contract Call:
+        address:   0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
+        function:  transfer(address recipient, uint256 amount)
+        args:              (0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266, 100000000)
+        sender:    0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+
+      Docs: https://viem.sh/docs/contract/writeContract
+      Version: viem@2.21.32]
+    `);
+
+    await expect(
+      client.writeContract({
+        address: usdc,
+        abi: erc20Abi,
+        functionName: "transfer",
+        args: [client.account.address, parseUnits("100", 6)],
+      }),
+    ).rejects.toMatchInlineSnapshot(`
+      [ContractFunctionExecutionError: The contract function "transfer" reverted with the following reason:
+
+      0 ↳ FROM 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+      0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer amount exceeds balance
+        1 ↳ DELEGATECALL (0x43506849d7c04f9138d1a2050bbf3a0c054402dd).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer amount exceeds balance
+
+
+      Contract Call:
+        address:   0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
+        function:  transfer(address recipient, uint256 amount)
+        args:              (0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266, 100000000)
+        sender:    0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+
+      Docs: https://viem.sh/docs/contract/writeContract
+      Version: viem@2.21.32]
+    `);
+  });
 });

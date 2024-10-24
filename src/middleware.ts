@@ -4,15 +4,15 @@ import { type TraceFormatConfig, formatFullTrace } from "./format.js";
 
 export type TracerConfig = TraceFormatConfig & {
   /**
-   * Whether to trace all transactions. Default to `false`.
+   * Whether to trace all transactions. Defaults to `false`.
    */
   all: boolean;
   /**
-   * Whether to trace the next submitted transaction. Default to `false`.
+   * Whether to trace the next submitted transaction. Defaults to `undefined`.
    */
-  next: boolean;
+  next?: boolean;
   /**
-   * Whether to trace all failed transactions. Default to `true`.
+   * Whether to trace all failed transactions. Defaults to `true`.
    */
   failed: boolean;
 };
@@ -34,7 +34,7 @@ export type TracedTransport<transport extends Transport = Transport> = transport
  */
 export function traced<transport extends Transport>(
   transport: transport,
-  { all = false, next = false, failed = true, gas = false }: Partial<TracerConfig> = {},
+  { all = false, next, failed = true, gas = false }: Partial<TracerConfig> = {},
 ): TracedTransport<transport> {
   // @ts-ignore: complex overload
   return (...config) => {
@@ -48,40 +48,39 @@ export function traced<transport extends Transport>(
     return {
       ...instance,
       async request(args, options) {
-        const { method, params } = args;
-
-        const traceCall = async () => {
-          const trace = await instance.request<TraceCallRpcSchema>(
-            {
-              method: "debug_traceCall",
-              params: [
-                // @ts-ignore: params[0] is the rpc transaction request
-                params[0],
-                // @ts-ignore: params[1] is either undefined or the block identifier
-                params[1] || "latest",
-                {
-                  // @ts-ignore: params[2] may contain state and block overrides
-                  ...params[2],
-                  tracer: "callTracer",
-                  tracerConfig: {
-                    onlyTopCall: false,
-                    withLog: true,
-                  },
-                },
-              ],
-            },
-            { retryCount: 0 },
-          );
-
-          return await formatFullTrace(trace, instance.value!.tracer);
-        };
-
-        switch (method) {
+        switch (args.method) {
           case "eth_estimateGas":
           case "eth_sendTransaction": {
-            if (instance.value?.tracer.all || instance.value?.tracer.next) {
-              instance.value.tracer.next = false;
+            const { params } = args;
+            const { tracer } = instance.value!;
 
+            const traceCall = async () => {
+              const trace = await instance.request<TraceCallRpcSchema>(
+                {
+                  method: "debug_traceCall",
+                  params: [
+                    // @ts-ignore: params[0] is the rpc transaction request
+                    params[0],
+                    // @ts-ignore: params[1] is either undefined or the block identifier
+                    params[1] || "latest",
+                    {
+                      // @ts-ignore: params[2] may contain state and block overrides
+                      ...params[2],
+                      tracer: "callTracer",
+                      tracerConfig: {
+                        onlyTopCall: false,
+                        withLog: true,
+                      },
+                    },
+                  ],
+                },
+                { retryCount: 0 },
+              );
+
+              return await formatFullTrace(trace, tracer);
+            };
+
+            if (tracer.next || (tracer.next == null && tracer.all)) {
               try {
                 console.log(await traceCall());
               } catch (error) {
@@ -89,24 +88,22 @@ export function traced<transport extends Transport>(
               }
             }
 
-            break;
+            return instance
+              .request(args, options)
+              .catch(async (error) => {
+                if (tracer.next || (tracer.next == null && tracer.failed)) {
+                  throw new RawContractError({ message: `\n${await traceCall()}` });
+                }
+
+                throw error;
+              })
+              .finally(() => {
+                tracer.next = undefined;
+              });
           }
+          default:
+            return instance.request(args, options);
         }
-
-        return instance.request(args, options).catch(async (error) => {
-          switch (method) {
-            case "eth_estimateGas":
-            case "eth_sendTransaction": {
-              if (instance.value?.tracer.failed) {
-                throw new RawContractError({ message: `\n${await traceCall()}` });
-              }
-
-              break;
-            }
-          }
-
-          throw error;
-        });
       },
     };
   };

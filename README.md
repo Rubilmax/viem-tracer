@@ -30,7 +30,7 @@ import { foundry } from 'viem/chains';
 import { traceActions, traced } from 'viem-tracer';
 
 const client = createTestClient({
-  mode: 'anvil',
+  mode: "anvil",
   chain: foundry,
   transport: traced( // Automatically trace failed transactions (or programmatically)
     http(),
@@ -40,13 +40,19 @@ const client = createTestClient({
 
 // Returns the call trace as formatted by the requested tracer.
 await client.traceCall({
-   account: '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
-   to: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
-   value: parseEther('1'),
+   account: "0xA0Cf798816D4b9b9866b5330EEa46a18382f251e",
+   to: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+   value: parseEther("1"),
    // tracer: "prestateTracer", // Defaults to "callTracer".
 });
 
 // Failing `eth_estimateGas` and `eth_sendTransaction` RPC requests will automatically append the transaction traces to the error:
+await client.writeContract({
+   abi: erc20Abi,
+   address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+   functionName: "transfer",
+   args: ["0xA0Cf798816D4b9b9866b5330EEa46a18382f251e", 100_000000n],
+});
 
 // 0 ↳ FROM 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 // 0 ↳ CALL (0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).transfer(0xf39F...0xf3, 100000000) -> ERC20: transfer amount exceeds balance

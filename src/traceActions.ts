@@ -1,5 +1,5 @@
 import type { Chain, Client, Transport } from "viem";
-import { type RpcCallTrace, type TraceCallParameters, traceCall } from "./actions/traceCall.js";
+import { type RpcCallTrace, type TraceCallParameters, traceCall } from "./actions/traceCall";
 
 export type TraceActions<chain extends Chain | undefined = Chain | undefined> = {
   /**

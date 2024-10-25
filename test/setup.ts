@@ -4,9 +4,9 @@ import { http, createTestClient, publicActions, walletActions } from "viem";
 import { type DealActions, dealActions } from "viem-deal";
 import { mainnet } from "viem/chains";
 import { test as vitest } from "vitest";
-import { type TraceActions, type TracedTransport, traceActions, traced } from "../src/index.js";
-import { spawnAnvil } from "./anvil.js";
-import { testAccount } from "./fixtures.js";
+import { type TraceActions, type TracedTransport, traceActions, traced } from "../src/index";
+import { spawnAnvil } from "./anvil";
+import { testAccount } from "./fixtures";
 
 // Vitest needs to serialize BigInts to JSON, so we need to add a toJSON method to BigInt.prototype.
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt#use_within_json

@@ -1,6 +1,6 @@
 import { encodeFunctionData, erc20Abi, parseUnits } from "viem";
 import { describe, vi } from "vitest";
-import { test } from "./setup.js";
+import { test } from "./setup";
 
 const usdc = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
 

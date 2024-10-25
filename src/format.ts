@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import colors from "colors/safe.js";
+import colors from "colors/safe";
 import {
   type Address,
   type Hex,
@@ -12,7 +12,7 @@ import {
   parseAbi,
   slice,
 } from "viem";
-import type { RpcCallTrace, RpcLogTrace } from "./actions/traceCall.js";
+import type { RpcCallTrace, RpcLogTrace } from "./actions/traceCall";
 
 // The requested module 'colors/safe.js' is a CommonJS module, which may not support all module.exports as named exports.
 // CommonJS modules can always be imported via the default export, for example using:

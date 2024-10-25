@@ -1,6 +1,6 @@
 import { RawContractError, type Transport } from "viem";
-import type { TraceCallRpcSchema } from "./actions/traceCall.js";
-import { type TraceFormatConfig, formatFullTrace } from "./format.js";
+import type { TraceCallRpcSchema } from "./actions/traceCall";
+import { type TraceFormatConfig, formatFullTrace } from "./format";
 
 export type TracerConfig = TraceFormatConfig & {
   /**

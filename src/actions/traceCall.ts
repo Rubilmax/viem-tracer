@@ -1,4 +1,4 @@
-import type { AssertRequestParameters } from "node_modules/viem/_types/utils/transaction/assertRequest.js";
+import type { AssertRequestParameters } from "node_modules/viem/_types/utils/transaction/assertRequest";
 import {
   type Account,
   type Address,

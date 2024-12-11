@@ -144,7 +144,8 @@ export function traced<transport extends Transport>(
             }
 
             if (receipt?.status === "0x0") throw await traceCall();
-            else throw new WaitForTransactionReceiptTimeoutError({ hash: res as Hash });
+
+            throw new WaitForTransactionReceiptTimeoutError({ hash: res as Hash });
           } catch (error) {
             if (error instanceof ExecutionRevertedTraceError) throw error;
 

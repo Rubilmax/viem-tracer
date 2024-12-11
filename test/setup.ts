@@ -1,5 +1,15 @@
 import { disable } from "colors";
-import type { Client, HDAccount, HttpTransport, PublicActions, TestActions, TestRpcSchema, WalletActions } from "viem";
+import type {
+  Client,
+  HDAccount,
+  HttpTransport,
+  PublicActions,
+  PublicRpcSchema,
+  TestActions,
+  TestRpcSchema,
+  WalletActions,
+  WalletRpcSchema,
+} from "viem";
 import { http, createTestClient, publicActions, walletActions } from "viem";
 import { type DealActions, dealActions } from "viem-deal";
 import { mainnet } from "viem/chains";
@@ -35,7 +45,7 @@ export const test = vitest.extend<{
     TracedTransport<HttpTransport>,
     typeof mainnet,
     HDAccount,
-    TestRpcSchema<"anvil">,
+    TestRpcSchema<"anvil"> | PublicRpcSchema | WalletRpcSchema,
     TestActions &
       DealActions<HDAccount> &
       TraceActions<typeof mainnet> &

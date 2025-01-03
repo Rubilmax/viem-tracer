@@ -143,9 +143,8 @@ export function traced<transport extends Transport>(
               await new Promise((resolve) => setTimeout(resolve, 250));
             }
 
-            if (receipt?.status === "0x0") throw await traceCall();
-
-            throw new WaitForTransactionReceiptTimeoutError({ hash: res as Hash });
+            if (!receipt) throw new WaitForTransactionReceiptTimeoutError({ hash: res as Hash });
+            if (receipt.status === "0x0") throw await traceCall();
           } catch (error) {
             if (error instanceof ExecutionRevertedTraceError) throw error;
 

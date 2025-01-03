@@ -81,7 +81,7 @@ describe("traceCall", () => {
       0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer amount exceeds balance
         1 ↳ DELEGATECALL (0x43506849d7c04f9138d1a2050bbf3a0c054402dd).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer amount exceeds balance
 
-      Version: viem@2.21.54]
+      Version: viem@2.22.2]
     `);
   });
 
@@ -108,7 +108,7 @@ describe("traceCall", () => {
       0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer from the zero address
         1 ↳ DELEGATECALL (0x43506849d7c04f9138d1a2050bbf3a0c054402dd).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer from the zero address
 
-      Version: viem@2.21.54]
+      Version: viem@2.22.2]
     `);
   });
 
@@ -133,7 +133,7 @@ describe("traceCall", () => {
         sender:    0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
       Docs: https://viem.sh/docs/contract/writeContract
-      Version: viem@2.21.54]
+      Version: viem@2.22.2]
     `);
 
     client.transport.tracer.failed = true;
@@ -173,7 +173,7 @@ describe("traceCall", () => {
       0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer amount exceeds balance
         1 ↳ DELEGATECALL (0x43506849d7c04f9138d1a2050bbf3a0c054402dd).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer amount exceeds balance
 
-      Version: viem@2.21.54]
+      Version: viem@2.22.2]
     `);
   });
 
@@ -232,7 +232,7 @@ describe("traceCall", () => {
         sender:    0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
       Docs: https://viem.sh/docs/contract/writeContract
-      Version: viem@2.21.54]
+      Version: viem@2.22.2]
     `);
 
     await expect(
@@ -270,7 +270,7 @@ describe("traceCall", () => {
       0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer amount exceeds balance
         1 ↳ DELEGATECALL (0x43506849d7c04f9138d1a2050bbf3a0c054402dd).transfer(0xf39Fd6…0xf3, 100000000) -> ERC20: transfer amount exceeds balance
 
-      Version: viem@2.21.54]
+      Version: viem@2.22.2]
     `);
   });
 });

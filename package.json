@@ -55,7 +55,7 @@
     "lodash.kebabcase": "^4.1.1",
     "semantic-release": "^24.2.0",
     "typescript": "^5.7.2",
-    "viem": "^2.21.54",
+    "viem": "^2.22.2",
     "viem-deal": "^2.0.4",
     "vitest": "^2.1.8"
   },

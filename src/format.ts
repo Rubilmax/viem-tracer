@@ -1,6 +1,6 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import colors from "colors/safe";
 import {
   type Address,
@@ -189,7 +189,10 @@ export async function formatFullTrace(
         signatures.events[sig as Hex] = match;
       });
 
-      writeFileSync(getSignaturesCachePath(), JSON.stringify(signatures));
+      const path = getSignaturesCachePath();
+      if (!existsSync(path)) mkdirSync(dirname(path), { recursive: true });
+
+      writeFileSync(path, JSON.stringify(signatures));
     } else {
       console.warn(
         `Failed to fetch signatures for unknown selectors: ${unknownFunctionSelectors},${unknownEventSelectors}`,

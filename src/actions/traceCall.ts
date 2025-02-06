@@ -57,7 +57,7 @@ export type RpcCallTrace = {
   revertReason?: string;
   calls?: RpcCallTrace[];
   logs?: RpcLogTrace[];
-  value: Hex;
+  value?: Hex;
   type: RpcCallType;
 };
 

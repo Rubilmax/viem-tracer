@@ -125,7 +125,7 @@ export const formatCallSignature = (
     data: trace.input,
   });
 
-  const value = BigInt(trace.value);
+  const value = BigInt(trace.value ?? "0x0");
   const formattedArgs = args?.map((arg) => formatArg(arg, level)).join(", ");
 
   return `${bold((trace.revertReason || trace.error ? red : green)(functionName))}${value !== 0n ? grey(`{ ${white(formatEther(value))} ETH }`) : ""}${config.gas ? grey(`[ ${dim(magenta(Number(trace.gasUsed).toLocaleString()))} / ${dim(magenta(Number(trace.gas).toLocaleString()))} ]`) : ""}(${formattedArgs ?? ""})`;

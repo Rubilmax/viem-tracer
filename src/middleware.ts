@@ -55,7 +55,7 @@ export class ExecutionRevertedTraceError extends BaseError {
  */
 export function traced<transport extends Transport>(
   transport: transport,
-  { all = false, next, failed = true, gas = false }: Partial<TracerConfig> = {},
+  { all = false, next, failed = true, gas, raw }: Partial<TracerConfig> = {},
 ): TracedTransport<transport> {
   // @ts-ignore: complex overload
   return (...config) => {
@@ -63,7 +63,7 @@ export function traced<transport extends Transport>(
 
     instance.value = {
       ...instance.value,
-      tracer: { all, next, failed, gas },
+      tracer: { all, next, failed, gas, raw },
     };
 
     return {

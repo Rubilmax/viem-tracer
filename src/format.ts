@@ -19,7 +19,14 @@ import type { RpcCallTrace, RpcLogTrace } from "./actions/traceCall";
 const { bold, cyan, grey, red, white, yellow, green, dim, magenta } = colors;
 
 export interface TraceFormatConfig {
-  gas: boolean;
+  /**
+   * Whether to trace gas with each call. Defaults to `false`.
+   */
+  gas?: boolean;
+  /**
+   * Whether to trace raw step with each call. Defaults to `false`.
+   */
+  raw?: boolean;
 }
 
 export interface SignaturesCache {
@@ -154,9 +161,10 @@ export const formatCallTrace = (
     .join("\n");
 
   const returnValue = trace.revertReason ?? trace.output;
+  const indentLevel = getIndentLevel(level, true);
 
-  return `${level === 1 ? `${getIndentLevel(level, true)}${cyan("FROM")} ${grey(trace.from)}\n` : ""}${getIndentLevel(level, true)}${yellow(trace.type)} ${trace.from === trace.to ? grey("self") : `(${white(trace.to)})`}.${formatCallSignature(trace, config, level, signatures)}${returnValue ? (trace.error ? red : grey)(` -> ${returnValue}`) : ""}${trace.logs ? `\n${trace.logs.map((log) => formatCallLog(log, level, signatures))}` : ""}
-${rest}`;
+  return `${level === 1 ? `${indentLevel}${cyan("FROM")} ${grey(trace.from)}\n` : ""}${indentLevel}${yellow(trace.type)} ${trace.from === trace.to ? grey("self") : `(${white(trace.to)})`}.${formatCallSignature(trace, config, level, signatures)}${returnValue ? (trace.error ? red : grey)(` -> ${returnValue}`) : ""}${trace.logs ? `\n${trace.logs.map((log) => formatCallLog(log, level, signatures))}` : ""}
+${config.raw ? `${grey(JSON.stringify(trace))}\n` : ""}${rest}`;
 };
 
 export async function formatFullTrace(

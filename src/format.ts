@@ -126,7 +126,7 @@ export const formatCallSignature = (
 
   const formattedArgs = args?.map((arg) => formatArg(arg, level)).join(", ");
 
-  return `${bold((trace.error ? red : green)(functionName))}${config.gas ? dim(magenta(`{ ${Number(trace.gasUsed).toLocaleString()} / ${Number(trace.gas).toLocaleString()} }`)) : ""}(${formattedArgs ?? ""})`;
+  return `${bold((trace.revertReason || trace.error ? red : green)(functionName))}${trace.value !== "0x0" ? grey(`{ ${white(Number(trace.value).toLocaleString())} }`) : ""}${config.gas ? grey(`[ ${dim(magenta(Number(trace.gasUsed).toLocaleString()))} / ${dim(magenta(Number(trace.gas).toLocaleString()))} ]`) : ""}(${formattedArgs ?? ""})`;
 };
 
 export const formatCallLog = (log: RpcLogTrace, level: number, signatures: SignaturesCache) => {
@@ -160,10 +160,11 @@ export const formatCallTrace = (
     .map((subtrace) => formatCallTrace(subtrace, config, signatures, level + 1))
     .join("\n");
 
-  const returnValue = trace.revertReason ?? trace.output;
+  const error = trace.revertReason || trace.error;
+  const returnValue = error || trace.output;
   const indentLevel = getIndentLevel(level, true);
 
-  return `${level === 1 ? `${indentLevel}${cyan("FROM")} ${grey(trace.from)}\n` : ""}${indentLevel}${yellow(trace.type)} ${trace.from === trace.to ? grey("self") : `(${white(trace.to)})`}.${formatCallSignature(trace, config, level, signatures)}${returnValue ? (trace.error ? red : grey)(` -> ${returnValue}`) : ""}${trace.logs ? `\n${trace.logs.map((log) => formatCallLog(log, level, signatures))}` : ""}
+  return `${level === 1 ? `${indentLevel}${cyan("FROM")} ${grey(trace.from)}\n` : ""}${indentLevel}${yellow(trace.type)} ${trace.from === trace.to ? grey("self") : `(${white(trace.to)})`}.${formatCallSignature(trace, config, level, signatures)}${returnValue ? (error ? red : grey)(` -> ${returnValue}`) : ""}${trace.logs ? `\n${trace.logs.map((log) => formatCallLog(log, level, signatures))}` : ""}
 ${config.raw ? `${grey(JSON.stringify(trace))}\n` : ""}${rest}`;
 };
 

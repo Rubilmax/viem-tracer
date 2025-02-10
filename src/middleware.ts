@@ -3,6 +3,7 @@ import {
   type Hash,
   type RpcTransactionReceipt,
   type RpcTransactionRequest,
+  type TransactionExecutionError,
   type Transport,
   WaitForTransactionReceiptTimeoutError,
 } from "viem";
@@ -42,10 +43,10 @@ export class ExecutionRevertedTraceError extends BaseError {
   static code = 3;
   static nodeMessage = /execution reverted/;
 
-  constructor(trace: string, reason?: string) {
-    super(`Execution reverted ${reason ? `with reason: ${reason}` : "for an unknown reason"}.`, {
+  constructor(trace: string, message = "execution reverted for an unknown reason.") {
+    super(message, {
       name: "ExecutionRevertedError",
-      details: `\n${trace}`,
+      metaMessages: [trace],
     });
   }
 }
@@ -78,7 +79,7 @@ export function traced<transport extends Transport>(
         // @ts-expect-error: params[0] is the rpc transaction request
         const tx = params[0] as RpcTransactionRequest;
 
-        const traceCall = async () => {
+        const traceCall = async (message?: string) => {
           const trace = await instance.request<TraceCallRpcSchema>(
             {
               method: "debug_traceCall",
@@ -102,13 +103,13 @@ export function traced<transport extends Transport>(
 
           return new ExecutionRevertedTraceError(
             await formatFullTrace(trace, tracer),
-            trace.revertReason || trace.error,
+            message || trace.revertReason || trace.error,
           );
         };
 
         if (tracer.next || (tracer.next == null && tracer.all)) {
           try {
-            console.log((await traceCall()).details);
+            console.log((await traceCall()).metaMessages![0]);
           } catch (error) {
             console.warn(`Failed to trace transaction: ${error}`);
           }
@@ -118,7 +119,7 @@ export function traced<transport extends Transport>(
           .request(args, options)
           .catch(async (error) => {
             if (tracer.next || (tracer.next == null && tracer.failed)) {
-              const trace = await traceCall();
+              const trace = await traceCall((error as TransactionExecutionError).details);
 
               trace.stack = error.stack;
 

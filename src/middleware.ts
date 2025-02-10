@@ -100,7 +100,10 @@ export function traced<transport extends Transport>(
             { retryCount: 0 },
           );
 
-          return new ExecutionRevertedTraceError(await formatFullTrace(trace, tracer), trace.revertReason);
+          return new ExecutionRevertedTraceError(
+            await formatFullTrace(trace, tracer),
+            trace.revertReason || trace.error,
+          );
         };
 
         if (tracer.next || (tracer.next == null && tracer.all)) {

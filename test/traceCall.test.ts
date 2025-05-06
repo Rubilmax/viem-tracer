@@ -54,7 +54,7 @@ describe("traceCall", () => {
         args: [client.account.address, parseUnits("100", 6)],
       }),
     ).rejects.toMatchInlineSnapshot(`
-      [ContractFunctionExecutionError: execution reverted: revert: ERC20: transfer amount exceeds balance
+      [ContractFunctionExecutionError: execution reverted: ERC20: transfer amount exceeds balance
 
       0 ↳ FROM 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
       0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer(0xf39Fd6e5…2266, 100000000) -> ERC20: transfer amount exceeds balance
@@ -146,7 +146,7 @@ describe("traceCall", () => {
         args: [client.account.address, parseUnits("100", 6)],
       }),
     ).rejects.toMatchInlineSnapshot(`
-      [ContractFunctionExecutionError: execution reverted: revert: ERC20: transfer amount exceeds balance
+      [ContractFunctionExecutionError: execution reverted: ERC20: transfer amount exceeds balance
 
       0 ↳ FROM 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
       0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer(0xf39Fd6e5…2266, 100000000) -> ERC20: transfer amount exceeds balance
@@ -242,7 +242,7 @@ describe("traceCall", () => {
         args: [client.account.address, parseUnits("100", 6)],
       }),
     ).rejects.toMatchInlineSnapshot(`
-      [ContractFunctionExecutionError: execution reverted: revert: ERC20: transfer amount exceeds balance
+      [ContractFunctionExecutionError: execution reverted: ERC20: transfer amount exceeds balance
 
       0 ↳ FROM 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
       0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer(0xf39Fd6e5…2266, 100000000) -> ERC20: transfer amount exceeds balance
@@ -284,7 +284,7 @@ describe("traceCall", () => {
         args: [client.account.address, parseUnits("100", 6)],
       }),
     ).rejects.toMatchInlineSnapshot(`
-      [ContractFunctionExecutionError: execution reverted: revert: ERC20: transfer amount exceeds balance
+      [ContractFunctionExecutionError: execution reverted: ERC20: transfer amount exceeds balance
 
       0 ↳ FROM 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
       0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer(0xf39Fd6e5…2266, 100000000) -> ERC20: transfer amount exceeds balance
@@ -324,7 +324,7 @@ describe("traceCall", () => {
         args: [client.account.address, parseUnits("100", 6)],
       }),
     ).rejects.toMatchInlineSnapshot(`
-      [ContractFunctionExecutionError: execution reverted: revert: ERC20: transfer amount exceeds balance
+      [ContractFunctionExecutionError: execution reverted: ERC20: transfer amount exceeds balance
 
       0 ↳ FROM 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
       0 ↳ CALL (0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).transfer(0xf39Fd6e5…2266, 100000000) -> ERC20: transfer amount exceeds balance

@@ -10,8 +10,11 @@ import {
   decodeFunctionData,
   formatEther,
   isAddress,
+  isHex,
   parseAbi,
+  size,
   slice,
+  zeroHash,
 } from "viem";
 import type { RpcCallTrace, RpcLogTrace } from "./actions/traceCall";
 
@@ -28,6 +31,10 @@ export interface TraceFormatConfig {
    * Whether to trace raw step with each call. Defaults to `false`.
    */
   raw?: boolean;
+  /**
+   * Whether to show full arguments for each call. Defaults to `false`.
+   */
+  fullArgs?: boolean;
 }
 
 export interface SignaturesCache {
@@ -80,11 +87,33 @@ export const getCallTraceUnknownEventSelectors = (trace: RpcCallTrace, signature
 export const getIndentLevel = (level: number, index = false) =>
   `${"  ".repeat(level - 1)}${index ? cyan(`${level - 1} ↳ `) : "    "}`;
 
-export const formatAddress = (address: Address) => `${address.slice(0, 8)}…${address.slice(0, 4)}`;
+export const formatAddress = (address: Address) => `${slice(address, 0, 4)}…${slice(address, -2).slice(2)}`;
+export const formatHex = (hex: Hex) => {
+  if (hex === zeroHash) return "bytes(0)";
 
-export const formatArg = (arg: unknown, level: number): string => {
+  return size(hex) > 8 ? `${slice(hex, 0, 4)}…${slice(hex, -1).slice(2)}` : hex;
+};
+export const formatInt = (value: bigint | number) => {
+  for (let i = 32n; i <= 256n; i++) if (BigInt(value) === 2n ** i - 1n) return `2 ** ${i} - 1`;
+
+  return String(value);
+};
+
+export const formatArg = (arg: unknown, level: number, config: Partial<TraceFormatConfig>): string => {
   if (Array.isArray(arg)) {
-    const formattedArr = arg.map((arg) => `\n${getIndentLevel(level + 1)}${grey(formatArg(arg, level + 1))},`).join("");
+    const { length } = arg;
+    const wrapLines = length > 5 || arg.some((a) => Array.isArray(a));
+
+    const formattedArr = arg
+      .map(
+        (arg, i) =>
+          `${wrapLines ? `\n${getIndentLevel(level + 1)}` : ""}${grey(
+            formatArg(arg, level + 1, config),
+          )}${i !== length - 1 || wrapLines ? "," : ""}`,
+      )
+      .join(wrapLines ? "" : " ");
+
+    if (!wrapLines) return `[${formattedArr}]`;
 
     return `[${formattedArr ? `${formattedArr}\n` : ""}${getIndentLevel(level)}]`;
   }
@@ -94,13 +123,20 @@ export const formatArg = (arg: unknown, level: number): string => {
       if (arg == null) return "";
 
       const formattedObj = Object.entries(arg)
-        .map(([key, value]) => `\n${getIndentLevel(level + 1)}${key}: ${grey(formatArg(value, level + 1))},`)
+        .map(([key, value]) => `\n${getIndentLevel(level + 1)}${key}: ${grey(formatArg(value, level + 1, config))},`)
         .join("");
 
       return `{${formattedObj ? `${formattedObj}\n` : ""}${getIndentLevel(level)}}`;
     }
     case "string":
-      return grey(isAddress(arg, { strict: false }) ? formatAddress(arg) : arg);
+      if (config.fullArgs) return grey(arg);
+
+      return grey(isAddress(arg, { strict: false }) ? formatAddress(arg) : isHex(arg) ? formatHex(arg) : arg);
+    case "bigint":
+    case "number":
+      if (config.fullArgs) return grey(String(arg));
+
+      return grey(formatInt(arg));
     default:
       return grey(String(arg));
   }
@@ -126,12 +162,27 @@ export const formatCallSignature = (
   });
 
   const value = BigInt(trace.value ?? "0x0");
-  const formattedArgs = args?.map((arg) => formatArg(arg, level)).join(", ");
+  const formattedArgs = args?.map((arg) => formatArg(arg, level, config)).join(", ");
 
-  return `${bold((trace.revertReason || trace.error ? red : green)(functionName))}${value !== 0n ? grey(`{ ${white(formatEther(value))} ETH }`) : ""}${config.gas ? grey(`[ ${dim(magenta(Number(trace.gasUsed).toLocaleString()))} / ${dim(magenta(Number(trace.gas).toLocaleString()))} ]`) : ""}(${formattedArgs ?? ""})`;
+  return `${bold(
+    (trace.revertReason || trace.error ? red : green)(functionName),
+  )}${value !== 0n ? grey(`{ ${white(formatEther(value))} ETH }`) : ""}${
+    config.gas
+      ? grey(
+          `[ ${dim(magenta(Number(trace.gasUsed).toLocaleString()))} / ${dim(
+            magenta(Number(trace.gas).toLocaleString()),
+          )} ]`,
+        )
+      : ""
+  }(${formattedArgs ?? ""})`;
 };
 
-export const formatCallLog = (log: RpcLogTrace, level: number, signatures: SignaturesCache) => {
+export const formatCallLog = (
+  log: RpcLogTrace,
+  level: number,
+  signatures: SignaturesCache,
+  config: Partial<TraceFormatConfig>,
+) => {
   const selector = log.topics[0]!;
 
   const signature = signatures.events[selector];
@@ -147,7 +198,7 @@ export const formatCallLog = (log: RpcLogTrace, level: number, signatures: Signa
     strict: false,
   });
 
-  const formattedArgs = args?.map((arg) => formatArg(arg, level)).join(", ");
+  const formattedArgs = args?.map((arg) => formatArg(arg, level, config)).join(", ");
 
   return `${getIndentLevel(level + 1, true)}${yellow("LOG")} ${eventName}(${formattedArgs ?? ""})`;
 };
@@ -166,7 +217,13 @@ export const formatCallTrace = (
   const returnValue = error || trace.output;
   const indentLevel = getIndentLevel(level, true);
 
-  return `${level === 1 ? `${indentLevel}${cyan("FROM")} ${grey(trace.from)}\n` : ""}${indentLevel}${yellow(trace.type)} ${trace.from === trace.to ? grey("self") : `(${white(trace.to)})`}.${formatCallSignature(trace, config, level, signatures)}${returnValue ? (error ? red : grey)(` -> ${returnValue}`) : ""}${trace.logs ? `\n${trace.logs.map((log) => formatCallLog(log, level, signatures))}` : ""}
+  return `${
+    level === 1 ? `${indentLevel}${cyan("FROM")} ${grey(trace.from)}\n` : ""
+  }${indentLevel}${yellow(trace.type)} ${
+    trace.from === trace.to ? grey("self") : `(${white(trace.to)})`
+  }.${formatCallSignature(trace, config, level, signatures)}${
+    returnValue ? (error ? red : grey)(` -> ${returnValue}`) : ""
+  }${trace.logs ? `\n${trace.logs.map((log) => formatCallLog(log, level, signatures, config))}` : ""}
 ${config.raw ? `${grey(JSON.stringify(trace))}\n` : ""}${rest}`;
 };
 

@@ -174,19 +174,23 @@ export const formatCallSignature = (
 
   const error = trace.revertReason || trace.error;
   let returnValue = error || trace.output;
-  if (error == null) {
-    const functionAbi = (erc20Abi as Abi)
-      .concat(erc721Abi)
-      .concat(erc1155Abi)
-      .concat(erc4626Abi)
-      .concat(multicall3Abi)
-      .find((abi): abi is AbiFunction => abi.type === "function" && abi.name === functionName);
 
-    if (functionAbi != null) {
-      const decodedOutputs = decodeAbiParameters(functionAbi.outputs, trace.output);
-      returnValue = decodedOutputs.map((arg) => formatArg(arg, level, config)).join(", ");
+  try {
+    if (error == null) {
+      const functionAbi = (erc20Abi as Abi)
+        .concat(erc721Abi)
+        .concat(erc1155Abi)
+        .concat(erc4626Abi)
+        .concat(multicall3Abi)
+        .find((abi): abi is AbiFunction => abi.type === "function" && abi.name === functionName);
+
+      if (functionAbi != null) {
+        const decodedOutputs = decodeAbiParameters(functionAbi.outputs, trace.output);
+
+        returnValue = decodedOutputs.map((arg) => formatArg(arg, level, config)).join(", ");
+      }
     }
-  }
+  } catch {}
 
   return `${bold(
     (trace.revertReason || trace.error ? red : green)(functionName),

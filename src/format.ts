@@ -3,14 +3,22 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import colors from "colors/safe";
 import {
+  type Abi,
+  type AbiFunction,
   type Address,
   type Hex,
   concatHex,
+  decodeAbiParameters,
   decodeEventLog,
   decodeFunctionData,
+  erc20Abi,
+  erc721Abi,
+  erc1155Abi,
+  erc4626Abi,
   formatEther,
   isAddress,
   isHex,
+  multicall3Abi,
   parseAbi,
   size,
   slice,
@@ -164,6 +172,22 @@ export const formatCallSignature = (
   const value = BigInt(trace.value ?? "0x0");
   const formattedArgs = args?.map((arg) => formatArg(arg, level, config)).join(", ");
 
+  const error = trace.revertReason || trace.error;
+  let returnValue = error || trace.output;
+  if (error == null) {
+    const functionAbi = (erc20Abi as Abi)
+      .concat(erc721Abi)
+      .concat(erc1155Abi)
+      .concat(erc4626Abi)
+      .concat(multicall3Abi)
+      .find((abi): abi is AbiFunction => abi.type === "function" && abi.name === functionName);
+
+    if (functionAbi != null) {
+      const decodedOutputs = decodeAbiParameters(functionAbi.outputs, trace.output);
+      returnValue = decodedOutputs.map((arg) => formatArg(arg, level, config)).join(", ");
+    }
+  }
+
   return `${bold(
     (trace.revertReason || trace.error ? red : green)(functionName),
   )}${value !== 0n ? grey(`{ ${white(formatEther(value))} ETH }`) : ""}${
@@ -174,7 +198,7 @@ export const formatCallSignature = (
           )} ]`,
         )
       : ""
-  }(${formattedArgs ?? ""})`;
+  }(${formattedArgs ?? ""})${returnValue ? (error ? red : grey)(` -> ${returnValue}`) : ""}`;
 };
 
 export const formatCallLog = (
@@ -213,17 +237,13 @@ export const formatCallTrace = (
     .map((subtrace) => formatCallTrace(subtrace, config, signatures, level + 1))
     .join("\n");
 
-  const error = trace.revertReason || trace.error;
-  const returnValue = error || trace.output;
   const indentLevel = getIndentLevel(level, true);
 
   return `${
     level === 1 ? `${indentLevel}${cyan("FROM")} ${grey(trace.from)}\n` : ""
   }${indentLevel}${yellow(trace.type)} ${
     trace.from === trace.to ? grey("self") : `(${white(trace.to)})`
-  }.${formatCallSignature(trace, config, level, signatures)}${
-    returnValue ? (error ? red : grey)(` -> ${returnValue}`) : ""
-  }${trace.logs ? `\n${trace.logs.map((log) => formatCallLog(log, level, signatures, config))}` : ""}
+  }.${formatCallSignature(trace, config, level, signatures)}${trace.logs ? `\n${trace.logs.map((log) => formatCallLog(log, level, signatures, config))}` : ""}
 ${config.raw ? `${grey(JSON.stringify(trace))}\n` : ""}${rest}`;
 };
 

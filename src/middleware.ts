@@ -25,25 +25,29 @@ export type TracerConfig = TraceFormatConfig & {
   failed: boolean;
 };
 
-export type TracedTransport<transport extends Transport = Transport> = transport extends Transport<
-  infer type,
-  infer rpcAttributes,
-  infer eip1193RequestFn
->
-  ? Transport<
-      type,
-      rpcAttributes & {
-        tracer: TracerConfig;
-      },
-      eip1193RequestFn
-    >
-  : never;
+export type TracedTransport<transport extends Transport = Transport> =
+  transport extends Transport<
+    infer type,
+    infer rpcAttributes,
+    infer eip1193RequestFn
+  >
+    ? Transport<
+        type,
+        rpcAttributes & {
+          tracer: TracerConfig;
+        },
+        eip1193RequestFn
+      >
+    : never;
 
 export class ExecutionRevertedTraceError extends BaseError {
   static code = 3;
   static nodeMessage = /execution reverted/;
 
-  constructor(trace: string, message = "execution reverted for an unknown reason.") {
+  constructor(
+    trace: string,
+    message = "execution reverted for an unknown reason."
+  ) {
     super(message, {
       name: "ExecutionRevertedError",
       metaMessages: [trace],
@@ -56,11 +60,13 @@ export class ExecutionRevertedTraceError extends BaseError {
  */
 export function traced<transport extends Transport>(
   transport: transport,
-  { all = false, next, failed = true, gas, raw }: Partial<TracerConfig> = {},
+  { all = false, next, failed = true, gas, raw }: Partial<TracerConfig> = {}
 ): TracedTransport<transport> {
   // @ts-ignore: complex overload
   return (...config) => {
-    const instance = transport(...config) as ReturnType<TracedTransport<transport>>;
+    const instance = transport(...config) as ReturnType<
+      TracedTransport<transport>
+    >;
 
     instance.value = {
       ...instance.value,
@@ -71,7 +77,11 @@ export function traced<transport extends Transport>(
       ...instance,
       async request(args, options) {
         const { method, params } = args;
-        if (method !== "eth_estimateGas" && method !== "eth_sendTransaction" && method !== "wallet_sendTransaction")
+        if (
+          method !== "eth_estimateGas" &&
+          method !== "eth_sendTransaction" &&
+          method !== "wallet_sendTransaction"
+        )
           return instance.request(args, options);
 
         const { tracer } = instance.value!;
@@ -98,12 +108,12 @@ export function traced<transport extends Transport>(
                 },
               ],
             },
-            { retryCount: 0 },
+            { retryCount: 0 }
           );
 
           return new ExecutionRevertedTraceError(
             await formatFullTrace(trace, tracer),
-            message || trace.revertReason || trace.error,
+            message || trace.revertReason || trace.error
           );
         };
 
@@ -111,7 +121,8 @@ export function traced<transport extends Transport>(
           try {
             console.log((await traceCall()).metaMessages![0]);
           } catch (error) {
-            console.warn(`Failed to trace transaction: ${error}`);
+            console.warn("Failed to trace transaction:");
+            console.trace(error);
           }
         }
 
@@ -119,7 +130,9 @@ export function traced<transport extends Transport>(
           .request(args, options)
           .catch(async (error) => {
             if (tracer.next || (tracer.next == null && tracer.failed)) {
-              const trace = await traceCall((error as TransactionExecutionError).details);
+              const trace = await traceCall(
+                (error as TransactionExecutionError).details
+              );
 
               trace.stack = error.stack;
 
@@ -147,12 +160,16 @@ export function traced<transport extends Transport>(
               await new Promise((resolve) => setTimeout(resolve, 250));
             }
 
-            if (!receipt) throw new WaitForTransactionReceiptTimeoutError({ hash: res as Hash });
+            if (!receipt)
+              throw new WaitForTransactionReceiptTimeoutError({
+                hash: res as Hash,
+              });
             if (receipt.status === "0x0") throw await traceCall();
           } catch (error) {
             if (error instanceof ExecutionRevertedTraceError) throw error;
 
-            console.warn(`Failed to trace transaction: ${error}`);
+            console.warn("Failed to trace transaction:");
+            console.trace(error);
           }
         }
 

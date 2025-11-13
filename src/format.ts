@@ -192,7 +192,9 @@ export const formatCallSignature = (
 ) => {
   const selector = getSelector(trace.input);
 
-  const signature = signatures.functions[selector];
+  const signature =
+    signatures.functions[selector] ??
+    (trace.input === "0x" ? "receive()" : undefined);
   if (!signature) return trace.input;
 
   const functionName = signature.split("(")[0]!;

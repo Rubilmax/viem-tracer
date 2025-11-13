@@ -195,13 +195,20 @@ export const formatCallSignature = (
   const signature = signatures.functions[selector];
   if (!signature) return trace.input;
 
-  const { functionName, args } = decodeFunctionData({
-    abi: parseAbi(
-      // @ts-ignore
-      [`function ${signature}`]
-    ),
-    data: trace.input,
-  });
+  const functionName = signature.split("(")[0]!;
+  let args: readonly unknown[] | undefined;
+
+  try {
+    ({ args } = decodeFunctionData({
+      abi: parseAbi(
+        // @ts-ignore
+        [`function ${signature}`]
+      ),
+      data: trace.input,
+    }));
+  } catch {
+    // Decoding function data can fail for many reasons, including invalid ABI.
+  }
 
   const value = BigInt(trace.value ?? "0x0");
   const formattedArgs = args

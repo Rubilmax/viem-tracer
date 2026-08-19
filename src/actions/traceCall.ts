@@ -9,7 +9,9 @@ import {
   type ExactPartial,
   type FormattedTransactionRequest,
   type Hex,
+  type RpcStateOverride,
   type RpcTransactionRequest,
+  type StateOverride,
   type TransactionRequest,
   type Transport,
   type UnionOmit,
@@ -32,6 +34,7 @@ export type TraceCallRpcSchema = {
         {
           tracer: "callTracer" | "prestateTracer";
           tracerConfig?: { onlyTopCall?: boolean; withLog?: boolean };
+          stateOverrides?: RpcStateOverride;
         },
       ];
   ReturnType: RpcCallTrace;
@@ -66,6 +69,7 @@ export type TraceCallParameters<chain extends Chain | undefined = Chain | undefi
   "from"
 > & {
   account?: Account | Address | undefined;
+  stateOverride?: StateOverride | undefined;
   tracer?: "callTracer" | "prestateTracer";
   tracerConfig?: { onlyTopCall?: boolean };
 } & (
@@ -105,7 +109,7 @@ export type TraceCallParameters<chain extends Chain | undefined = Chain | undefi
  */
 export async function traceCall<chain extends Chain | undefined>(
   client: Client<Transport, chain>,
-  { tracer = "callTracer", tracerConfig, ...args }: TraceCallParameters<chain>,
+  { tracer = "callTracer", tracerConfig, stateOverride, ...args }: TraceCallParameters<chain>,
 ) {
   const account_ = args.account ?? client.account;
   const account = account_ ? parseAccount(account_) : null;
@@ -177,10 +181,33 @@ export async function traceCall<chain extends Chain | undefined>(
       value,
     } as TransactionRequest);
 
+    const rpcStateOverrides = stateOverride
+      ? Object.fromEntries(
+          stateOverride.map(({ address, balance, nonce, state, stateDiff, code }) => [
+            address,
+            {
+              balance: balance !== undefined ? numberToHex(balance) : undefined,
+              nonce: nonce !== undefined ? numberToHex(nonce) : undefined,
+              code,
+              state: state ? Object.fromEntries(state.map(({ slot, value }) => [slot, value])) : undefined,
+              stateDiff: stateDiff ? Object.fromEntries(stateDiff.map(({ slot, value }) => [slot, value])) : undefined,
+            },
+          ]),
+        )
+      : undefined;
+
     const trace = await client.request<TraceCallRpcSchema>(
       {
         method: "debug_traceCall",
-        params: [request, block, { tracer, tracerConfig }],
+        params: [
+          request,
+          block,
+          {
+            tracer,
+            tracerConfig,
+            ...(rpcStateOverrides ? { stateOverrides: rpcStateOverrides } : {}),
+          },
+        ],
       },
       { retryCount: 0 },
     );

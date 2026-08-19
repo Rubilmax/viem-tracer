@@ -191,10 +191,15 @@ export const formatCallSignature = (
   signatures: SignaturesCache
 ) => {
   const selector = getSelector(trace.input);
+  const value = BigInt(trace.value ?? "0x0");
 
   const signature =
     signatures.functions[selector] ??
-    (trace.input === "0x" ? "receive()" : undefined);
+    (trace.input === "0x"
+      ? value === 0n
+        ? "fallback()"
+        : "receive()"
+      : undefined);
   if (!signature) return trace.input;
 
   const functionName = signature.split("(")[0]!;
@@ -212,7 +217,6 @@ export const formatCallSignature = (
     // Decoding function data can fail for many reasons, including invalid ABI.
   }
 
-  const value = BigInt(trace.value ?? "0x0");
   const formattedArgs = args
     ?.map((arg) => formatArg(arg, level, config))
     .join(", ");
